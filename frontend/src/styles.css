@@ -1,0 +1,550 @@
+/* Main styles for RealNewsGuard */
+
+:root {
+    --primary-color: #1e88e5;
+    --primary-dark: #1565c0;
+    --secondary-color: #f5f5f5;
+    --text-color: #333333;
+    --light-gray: #e0e0e0;
+    --medium-gray: #9e9e9e;
+    --danger-color: #f44336;
+    --warning-color: #ff9800;
+    --success-color: #4caf50;
+    --border-radius: 8px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background-color: #f9f9f9;
+}
+
+/* Header Styles */
+header {
+    background-color: white;
+    padding: 1.5rem;
+    box-shadow: var(--box-shadow);
+    text-align: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.logo-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-right: 0.75rem;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.tagline {
+    font-size: 1.1rem;
+    color: var(--medium-gray);
+}
+
+/* Main Content */
+main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Input Section */
+.input-section {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+}
+
+.input-section h2 {
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--light-gray);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+}
+
+.file-input-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.file-input-container input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-input-label {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px dashed var(--medium-gray);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.file-input-label:hover {
+    border-color: var(--primary-color);
+}
+
+.file-input-label i {
+    margin-right: 0.5rem;
+    color: var(--primary-color);
+}
+
+#image-preview-container {
+    position: relative;
+    margin-top: 1rem;
+    max-width: 300px;
+}
+
+#image-preview {
+    width: 100%;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+.remove-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--box-shadow);
+}
+
+.primary-button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.primary-button:hover {
+    background-color: var(--primary-dark);
+}
+
+.primary-button i {
+    margin-right: 0.5rem;
+}
+
+/* Results Section */
+.results-section {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--box-shadow);
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.results-header h2 {
+    color: var(--primary-color);
+}
+
+.secondary-button {
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.secondary-button:hover {
+    background-color: var(--light-gray);
+}
+
+.secondary-button i {
+    margin-right: 0.5rem;
+}
+
+.result-card {
+    background-color: var(--secondary-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.prediction-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.prediction-label {
+    font-weight: 500;
+    margin-right: 1rem;
+}
+
+.prediction {
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    color: white;
+}
+
+.prediction.real {
+    background-color: var(--success-color);
+}
+
+.prediction.fake {
+    background-color: var(--danger-color);
+}
+
+.prediction.suspicious {
+    background-color: var(--warning-color);
+}
+
+.confidence-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.confidence-label {
+    font-weight: 500;
+    margin-right: 1rem;
+    min-width: 80px;
+}
+
+.confidence-meter-container {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.confidence-meter {
+    height: 10px;
+    background-color: var(--light-gray);
+    border-radius: 5px;
+    overflow: hidden;
+    flex-grow: 1;
+    margin-right: 1rem;
+    position: relative;
+    --width: 0%;
+}
+
+.confidence-meter::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--width);
+    transition: width 1s ease-in-out;
+}
+
+.confidence-meter.real::before {
+    background-color: var(--success-color);
+}
+
+.confidence-meter.fake::before {
+    background-color: var(--danger-color);
+}
+
+.confidence-meter.suspicious::before {
+    background-color: var(--warning-color);
+}
+
+.confidence-value {
+    font-weight: 500;
+    min-width: 50px;
+}
+
+.explanation-container h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+/* Additional Information */
+.additional-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .additional-info {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.related-news, .fact-checks {
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.related-news h3, .fact-checks h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.news-item, .fact-check-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.news-item:last-child, .fact-check-item:last-child {
+    border-bottom: none;
+}
+
+.news-item-title, .fact-check-item-title {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.news-item-source, .fact-check-item-source {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.news-item-link, .fact-check-item-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+.news-item-link:hover, .fact-check-item-link:hover {
+    text-decoration: underline;
+}
+
+.fact-check-rating {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.rating-true {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.rating-false {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.rating-mixed {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--light-gray);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+footer {
+    background-color: white;
+    text-align: center;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+footer p {
+    color: var(--medium-gray);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+/* Custom badge styles */
+.badge.bg-success {
+    background-color: #d4edda !important;
+    color: #0f5132;
+}
+
+.badge.bg-danger {
+    background-color: #f8d7da !important;
+    color: #842029;
+}
+
+/* Image preview */
+#image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    overflow: hidden;
+}
+
+#image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+}
+
+/* Progress bar customization */
+.progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Result badge styling */
+#result-badge {
+    font-size: 1.2rem;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+}
+
+#result-badge.real {
+    background-color: #d4edda;
+    color: #0f5132;
+}
+
+#result-badge.fake {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+/* Related news and fact-check styling */
+#related-news .news-item,
+#fact-check .fact-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid var(--info-color);
+    background-color: rgba(13, 202, 240, 0.1);
+    border-radius: 0 4px 4px 0;
+}
+
+#related-news .news-item a,
+#fact-check .fact-item a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+#related-news .news-item a:hover,
+#fact-check .fact-item a:hover {
+    text-decoration: underline;
+}
+
+/* Explanation styling */
+#explanation {
+    border-color: var(--info-color);
+    background-color: rgba(13, 202, 240, 0.05);
+    padding: 1rem;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-md-6 {
+        margin-bottom: 1.5rem;
+    }
+} 

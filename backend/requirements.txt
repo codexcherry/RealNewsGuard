@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+transformers
+torch
+numpy
+requests
+beautifulsoup4
+scikit-learn
+lime
+shap
+newsapi-python
+aiofiles

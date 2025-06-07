@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RealNewsGuard - Fake News Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../src/styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <i class="fas fa-shield-alt logo-icon"></i>
+            <h1>RealNewsGuard</h1>
+        </div>
+        <p class="tagline">Detect fake news with AI-powered analysis</p>
+    </header>
+
+    <main>
+        <section class="input-section">
+            <h2>Analyze News Content</h2>
+            <form id="news-form">
+                <div class="form-group">
+                    <label for="headline">Headline</label>
+                    <input type="text" id="headline" name="headline" placeholder="Enter news headline" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" name="content" placeholder="Enter news content" rows="6" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="image">Image (optional)</label>
+                    <div class="file-input-container">
+                        <input type="file" id="image" name="image" accept="image/*">
+                        <div class="file-input-label">
+                            <i class="fas fa-upload"></i>
+                            <span id="file-name">Choose an image</span>
+                        </div>
+                    </div>
+                    <div id="image-preview-container" class="hidden">
+                        <img id="image-preview" src="#" alt="Image preview">
+                        <button type="button" id="remove-image" class="remove-button">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" id="analyze-button" class="primary-button">
+                    <i class="fas fa-search"></i> Analyze
+                </button>
+            </form>
+        </section>
+
+        <section id="results-section" class="results-section hidden">
+            <div class="results-header">
+                <h2>Analysis Results</h2>
+                <button id="new-analysis" class="secondary-button">
+                    <i class="fas fa-plus"></i> New Analysis
+                </button>
+            </div>
+            
+            <div class="result-card">
+                <div id="prediction-container" class="prediction-container">
+                    <div class="prediction-label">Prediction:</div>
+                    <div id="prediction" class="prediction"></div>
+                </div>
+                
+                <div class="confidence-container">
+                    <div class="confidence-label">Confidence:</div>
+                    <div class="confidence-meter-container">
+                        <div id="confidence-meter" class="confidence-meter"></div>
+                        <div id="confidence-value" class="confidence-value"></div>
+                    </div>
+                </div>
+                
+                <div class="explanation-container">
+                    <h3>Explanation</h3>
+                    <p id="explanation"></p>
+                </div>
+            </div>
+            
+            <div class="additional-info">
+                <div class="related-news">
+                    <h3>Related News Articles</h3>
+                    <div id="related-news-container" class="news-container"></div>
+                </div>
+                
+                <div class="fact-checks">
+                    <h3>Fact-Check Sources</h3>
+                    <div id="fact-checks-container" class="fact-checks-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Analyzing content...</p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 RealNewsGuard - AI-powered fake news detection</p>
+    </footer>
+
+    <script src="../src/app.js"></script>
+</body>
+</html> 
