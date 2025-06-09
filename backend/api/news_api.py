@@ -3,7 +3,7 @@ from newsapi import NewsApiClient
 import os
 
 # Initialize NewsAPI client with API key
-API_KEY = os.environ.get("NEWS_API_KEY", "c07ebf68824241289c891c6063b09266")  # Use the provided API key
+API_KEY = os.environ.get("NEWS_API_KEY", "your_api_key")  # Use the provided API key
 newsapi = NewsApiClient(api_key=API_KEY)
 
 def get_related_news(query, max_results=5):
