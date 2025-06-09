@@ -2,8 +2,19 @@ import re
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
-# Common clickbait phrases and patterns
+# Initialize NLTK resources
+try:
+    nltk.data.find('tokenizers/punkt')
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('punkt')
+    nltk.download('stopwords')
+
+# Common clickbait phrases and patterns - expanded list
 CLICKBAIT_PATTERNS = [
     r"you won't believe",
     r"mind(-|\s)blowing",
@@ -27,9 +38,33 @@ CLICKBAIT_PATTERNS = [
     r"find out",
     r"you'll never",
     r"will make you",
+    r"changed forever",
+    r"can't stop",
+    r"epic",
+    r"insane",
+    r"amazing",
+    r"believe your eyes",
+    r"gone wrong",
+    r"gone viral",
+    r"never seen before",
+    r"before it's deleted",
+    r"before it's too late",
+    r"they don't want you to see",
+    r"what they found",
+    r"what happened next",
+    r"doctors hate",
+    r"one simple trick",
+    r"simple way",
+    r"weird trick",
+    r"weird method",
+    r"secret trick",
+    r"secret method",
+    r"miracle",
+    r"game(-|\s)changer",
+    r"life(-|\s)changing",
 ]
 
-# Sensationalist language patterns
+# Sensationalist language patterns - expanded list
 SENSATIONALIST_PATTERNS = [
     r"breaking",
     r"urgent",
@@ -45,9 +80,50 @@ SENSATIONALIST_PATTERNS = [
     r"exposes",
     r"secret",
     r"conspiracy",
+    r"outrage",
+    r"furious",
+    r"slams",
+    r"destroys",
+    r"obliterates",
+    r"rips",
+    r"tears into",
+    r"blasts",
+    r"erupts",
+    r"meltdown",
+    r"chaos",
+    r"crisis",
+    r"nightmare",
+    r"disaster",
+    r"catastrophe",
+    r"terrifying",
+    r"horrifying",
+    r"devastating",
+    r"ruins",
+    r"tragic",
+    r"heartbreaking",
+    r"unreal",
+    r"insane",
+    r"disturbing",
+    r"bizarre",
+    r"extreme",
+    r"savage",
+    r"brutal",
+    r"massive",
+    r"huge",
+    r"enormous",
+    r"epic",
+    r"perfect",
+    r"absolutely",
+    r"completely",
+    r"totally",
+    r"literally",
+    r"actually",
+    r"honestly",
+    r"officially",
+    r"finally",
 ]
 
-# Suspicious claim patterns
+# Suspicious claim patterns - expanded list
 SUSPICIOUS_CLAIM_PATTERNS = [
     r"scientists shocked",
     r"doctors hate",
@@ -71,6 +147,41 @@ SUSPICIOUS_CLAIM_PATTERNS = [
     r"unknown (source|organization|researcher)",
     r"claims? (new study|research)",
     r"eat(ing)? large amounts",
+    r"prevents? (cancer|covid|covid(-|\s)19|coronavirus|aids|hiv)",
+    r"treats? (cancer|covid|covid(-|\s)19|coronavirus|aids|hiv)",
+    r"eliminates? (cancer|covid|covid(-|\s)19|coronavirus|aids|hiv)",
+    r"destroys? (cancer|covid|covid(-|\s)19|coronavirus|aids|hiv)",
+    r"kills? (cancer|covid|covid(-|\s)19|coronavirus|aids|hiv)",
+    r"natural (cure|treatment|remedy)",
+    r"ancient (cure|treatment|remedy)",
+    r"secret (cure|treatment|remedy)",
+    r"hidden (cure|treatment|remedy)",
+    r"alternative (cure|treatment|remedy)",
+    r"proven (cure|treatment|remedy)",
+    r"guaranteed (cure|treatment|remedy)",
+    r"(100%|completely) effective",
+    r"(100%|completely) safe",
+    r"no side effects",
+    r"risk(-|\s)free",
+    r"(doctors|scientists|experts) (are|were) (stunned|shocked|amazed|surprised)",
+    r"(doctors|scientists|experts) (don't|won't) tell you",
+    r"(doctors|scientists|experts) (hate|fear) this",
+    r"(big pharma|the government|they) (doesn't want|don't want|won't allow)",
+    r"(what|things) (they|the government|big pharma) (don't|doesn't) want you to know",
+    r"(they|the government|big pharma) (is|are) hiding",
+    r"(they|the government|big pharma) (is|are) lying",
+    r"(they|the government|big pharma) (is|are) covering up",
+    r"(they|the government|big pharma) (doesn't|don't) want you to see",
+    r"(they|the government|big pharma) (doesn't|don't) want you to know",
+    r"(they|the government|big pharma) (doesn't|don't) want you to find out",
+    r"(they|the government|big pharma) (is|are) keeping (this|it) from you",
+    r"(they|the government|big pharma) (is|are) keeping (this|it) secret",
+    r"(they|the government|big pharma) (is|are) suppressing (this|it)",
+    r"(they|the government|big pharma) (is|are) censoring (this|it)",
+    r"(they|the government|big pharma) (is|are) banning (this|it)",
+    r"(they|the government|big pharma) (doesn't|don't) want (this|it) to get out",
+    r"(they|the government|big pharma) (is|are) afraid of (this|it)",
+    r"(they|the government|big pharma) (is|are) terrified of (this|it)",
 ]
 
 def clean_text(text):
@@ -116,9 +227,27 @@ def detect_clickbait(headline):
     headline = headline.lower()
     matched_patterns = []
     
+    # Check for pattern matches
     for pattern in CLICKBAIT_PATTERNS:
-        if re.search(pattern, headline):
-            matched_patterns.append(pattern)
+        matches = re.findall(pattern, headline)
+        if matches:
+            matched_patterns.extend(matches)
+    
+    # Check for question headlines (often clickbait)
+    if re.search(r'\?$', headline) and any(word in headline for word in ['you', 'your', 'these', 'this', 'why', 'how', 'what']):
+        matched_patterns.append("question_headline")
+    
+    # Check for all caps words (often clickbait)
+    if re.search(r'\b[A-Z]{3,}\b', headline):
+        matched_patterns.append("all_caps")
+    
+    # Check for excessive punctuation (often clickbait)
+    if headline.count('!') > 1 or headline.count('?') > 1:
+        matched_patterns.append("excessive_punctuation")
+    
+    # Check for numbers at the beginning (often listicles, which are common clickbait)
+    if re.match(r'^\d+\s', headline):
+        matched_patterns.append("listicle")
     
     is_clickbait = len(matched_patterns) > 0
     
@@ -137,9 +266,19 @@ def detect_sensationalist_language(text):
     text = text.lower()
     matched_patterns = []
     
+    # Check for pattern matches
     for pattern in SENSATIONALIST_PATTERNS:
-        if re.search(pattern, text):
-            matched_patterns.append(pattern)
+        matches = re.findall(pattern, text)
+        if matches:
+            matched_patterns.extend(matches)
+    
+    # Check for excessive exclamation marks
+    if text.count('!') > 2:
+        matched_patterns.append("excessive_exclamation")
+    
+    # Check for ALL CAPS sentences
+    if re.search(r'[A-Z]{5,}', text):
+        matched_patterns.append("all_caps")
     
     is_sensationalist = len(matched_patterns) > 0
     
@@ -158,9 +297,25 @@ def detect_suspicious_claims(text):
     text = text.lower()
     matched_patterns = []
     
+    # Check for pattern matches
     for pattern in SUSPICIOUS_CLAIM_PATTERNS:
+        matches = re.findall(pattern, text)
+        if matches:
+            if isinstance(matches[0], tuple):
+                matched_patterns.extend([m for m in matches if m])
+            else:
+                matched_patterns.extend(matches)
+    
+    # Check for absolute claims
+    absolute_claims = [
+        r"(always|never|all|none|every|everyone|nobody|guaranteed)",
+        r"(100%|completely|totally|absolutely) (proven|guaranteed|effective|safe)"
+    ]
+    
+    for pattern in absolute_claims:
         if re.search(pattern, text):
-            matched_patterns.append(pattern)
+            matched_patterns.append("absolute_claim")
+            break
     
     has_suspicious_claims = len(matched_patterns) > 0
     
@@ -229,4 +384,56 @@ def extract_keywords(text, top_n=10):
     
     except Exception as e:
         print(f"Error extracting keywords: {str(e)}")
-        return [] 
+        return []
+
+def analyze_sentiment(text):
+    """
+    Analyze the sentiment of the text (positive, negative, neutral).
+    
+    Args:
+        text (str): Input text
+        
+    Returns:
+        dict: Sentiment analysis results
+    """
+    # Simple rule-based sentiment analysis
+    positive_words = [
+        'good', 'great', 'excellent', 'amazing', 'wonderful', 'best', 'love',
+        'happy', 'positive', 'success', 'successful', 'win', 'winning', 'won',
+        'benefit', 'beneficial', 'advantage', 'advantageous', 'helpful', 'useful'
+    ]
+    
+    negative_words = [
+        'bad', 'terrible', 'awful', 'horrible', 'worst', 'hate', 'sad',
+        'negative', 'fail', 'failure', 'failed', 'lose', 'losing', 'lost',
+        'harm', 'harmful', 'disadvantage', 'disadvantageous', 'useless'
+    ]
+    
+    # Tokenize and clean text
+    words = word_tokenize(clean_text(text))
+    
+    # Count sentiment words
+    positive_count = sum(1 for word in words if word in positive_words)
+    negative_count = sum(1 for word in words if word in negative_words)
+    
+    # Calculate sentiment score (-1 to 1)
+    total_count = positive_count + negative_count
+    if total_count > 0:
+        sentiment_score = (positive_count - negative_count) / total_count
+    else:
+        sentiment_score = 0.0
+    
+    # Determine sentiment label
+    if sentiment_score > 0.25:
+        sentiment = "positive"
+    elif sentiment_score < -0.25:
+        sentiment = "negative"
+    else:
+        sentiment = "neutral"
+    
+    return {
+        "sentiment": sentiment,
+        "score": sentiment_score,
+        "positive_count": positive_count,
+        "negative_count": negative_count
+    } 

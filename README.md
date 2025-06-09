@@ -43,6 +43,13 @@ RealNewsGuard/
 │   └── .gitkeep
 └── README.md
 ```
+#Run the application
+
+1.backend
+uvicorn main:app --reload
+
+2.frontend
+python -m http.server
 
 ## How It Works
 

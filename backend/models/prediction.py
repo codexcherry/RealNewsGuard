@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import json
-from utils.text_utils import clean_text, extract_keywords
+from utils.text_utils import clean_text, extract_keywords, analyze_sentiment
 from utils.image_utils import process_image, extract_exif_data, error_level_analysis
 from api.news_verification import verify_news
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -9,10 +9,13 @@ import torch
 import lime
 import shap
 from PIL import Image
+import requests
+from urllib.parse import urlparse
 from utils.text_utils import (
     detect_clickbait, 
     detect_sensationalist_language,
     detect_suspicious_claims,
+    compute_similarity,
 )
 
 # Initialize model and tokenizer
@@ -54,18 +57,22 @@ def get_prediction(headline, content="", image_path=None):
     # Get image-based prediction if image is provided
     image_pred = predict_from_image(image_path, headline) if image_path else None
     
+    # Check image-text consistency
+    image_text_consistency = check_image_text_consistency(headline, content, image_path) if image_path else None
+    
     # Combine predictions
-    final_pred = combine_predictions(text_pred, image_pred)
+    final_pred = combine_predictions(text_pred, image_pred, image_text_consistency)
     
     # Generate explanation
-    explanation = generate_explanation(headline, content, image_path, text_pred, image_pred)
+    explanation = generate_explanation(final_pred["features"], final_pred["confidence"], final_pred["has_health_keywords"])
     
     return {
         "label": final_pred["label"],
         "confidence": final_pred["confidence"],
         "explanation": explanation,
         "text_analysis": text_pred,
-        "image_analysis": image_pred
+        "image_analysis": image_pred,
+        "image_text_consistency": image_text_consistency
     }
 
 def predict_from_text(headline, content=""):
@@ -186,13 +193,63 @@ def predict_from_image(image_path, headline=""):
             "error": str(e)
         }
 
-def combine_predictions(text_pred, image_pred):
+def check_image_text_consistency(headline, content, image_path):
+    """
+    Check if the image is consistent with the headline and content.
+    
+    Args:
+        headline (str): News headline
+        content (str): News content
+        image_path (str): Path to the image
+        
+    Returns:
+        dict: Image-text consistency assessment
+    """
+    if not image_path or not os.path.exists(image_path):
+        return None
+    
+    try:
+        # In a real implementation, we would use:
+        # 1. CLIP or similar model to compute text-image similarity
+        # 2. Object detection to identify elements in the image
+        # 3. Named entity recognition to match entities in text and image
+        
+        # For demonstration purposes, we'll use a simple heuristic
+        # Extract keywords from text
+        headline_keywords = extract_keywords(headline, top_n=5)
+        content_keywords = extract_keywords(content, top_n=10)
+        
+        # Extract image features (placeholder)
+        # In a real implementation, we would extract actual visual features
+        
+        # Simulate consistency score (in a real implementation, this would be calculated)
+        consistency_score = 0.75  # Placeholder value
+        
+        # Check for common signs of mismatched images and text
+        is_consistent = consistency_score > 0.5
+        
+        return {
+            "consistency_score": consistency_score,
+            "is_consistent": is_consistent,
+            "text_keywords": [kw[0] for kw in headline_keywords + content_keywords][:10],
+        }
+    
+    except Exception as e:
+        print(f"Error checking image-text consistency: {str(e)}")
+        return {
+            "consistency_score": 0.5,
+            "is_consistent": True,  # Default to consistent in case of error
+            "error": str(e)
+        }
+
+def combine_predictions(text_pred, image_pred, image_text_consistency=None):
     """
     Combine text and image predictions
     
     Args:
         text_pred (dict): Text-based prediction
         image_pred (dict, optional): Image-based prediction
+        image_text_consistency (dict, optional): Image-text consistency assessment
         
     Returns:
         dict: Combined prediction results
@@ -203,9 +260,10 @@ def combine_predictions(text_pred, image_pred):
     # In a real implementation, we would use a more sophisticated fusion method
     # like a weighted average, MLP, or ensemble technique
     
-    # For demonstration, we'll use a simple weighted average
-    text_weight = 0.7
+    # For demonstration, we'll use a weighted average
+    text_weight = 0.6
     image_weight = 0.3
+    consistency_weight = 0.1
     
     # Calculate weighted confidence for fake
     if text_pred["label"] == "FAKE":
@@ -218,8 +276,16 @@ def combine_predictions(text_pred, image_pred):
     else:
         image_fake_conf = 1 - image_pred["confidence"]
     
+    # Add consistency factor (if image doesn't match text, increase fake probability)
+    consistency_fake_conf = 0.5  # Default
+    if image_text_consistency:
+        if not image_text_consistency.get("is_consistent", True):
+            consistency_fake_conf = 0.9  # High probability of fake if inconsistent
+        else:
+            consistency_fake_conf = 0.2  # Lower probability if consistent
+    
     # Combined fake confidence
-    combined_fake_conf = (text_weight * text_fake_conf) + (image_weight * image_fake_conf)
+    combined_fake_conf = (text_weight * text_fake_conf) + (image_weight * image_fake_conf) + (consistency_weight * consistency_fake_conf)
     
     # Determine final label and confidence
     if combined_fake_conf > 0.5:
@@ -234,42 +300,99 @@ def combine_predictions(text_pred, image_pred):
         "confidence": confidence
     }
 
-def generate_explanation(headline, content, image_path, text_pred, image_pred):
+def generate_explanation(features, suspicion_score, has_health_keywords=False):
     """
-    Generate human-readable explanation for the prediction
+    Generate an explanation for the prediction based on features.
     
     Args:
-        headline (str): News headline
-        content (str): News content
-        image_path (str): Path to the news image
-        text_pred (dict): Text-based prediction
-        image_pred (dict): Image-based prediction
+        features (dict): Extracted features
+        suspicion_score (float): Calculated suspicion score
+        has_health_keywords (bool): Whether health-related keywords were detected
         
     Returns:
-        str: Explanation of the prediction
+        str: Explanation text
     """
     explanations = []
     
     # Text-based explanations
-    if text_pred:
-        if text_pred["label"] == "FAKE":
-            if text_pred["suspicion_score"] > 0:
-                explanations.append("The text contains suspicious language patterns often found in fake news.")
-            explanations.append(f"Keywords that raised concerns: {', '.join(text_pred['keywords'][:3])}")
+    if features.get("is_clickbait", False):
+        patterns = features.get("clickbait_patterns", [])
+        if patterns:
+            explanations.append(f"Clickbait patterns detected in headline ({', '.join(patterns[:3])}).")
         else:
-            explanations.append("The text appears to use language consistent with legitimate news sources.")
+            explanations.append("Clickbait language detected in headline.")
+    
+    if features.get("is_sensationalist_headline", False):
+        patterns = features.get("sensationalist_patterns_headline", [])
+        if patterns:
+            explanations.append(f"Sensationalist language in headline ({', '.join(patterns[:3])}).")
+        else:
+            explanations.append("Sensationalist language detected in headline.")
+    
+    if features.get("is_sensationalist_content", False):
+        patterns = features.get("sensationalist_patterns_content", [])
+        if patterns:
+            explanations.append(f"Sensationalist language in content ({', '.join(patterns[:3])}).")
+        else:
+            explanations.append("Sensationalist language detected in content.")
+    
+    if features.get("has_suspicious_claims_headline", False):
+        patterns = features.get("suspicious_patterns_headline", [])
+        if patterns:
+            explanations.append(f"Suspicious claims in headline ({', '.join(patterns[:3])}).")
+        else:
+            explanations.append("Suspicious claims detected in headline.")
+    
+    if features.get("has_suspicious_claims_content", False):
+        patterns = features.get("suspicious_patterns_content", [])
+        if patterns:
+            explanations.append(f"Suspicious claims detected ({', '.join(patterns[:3])}).")
+        else:
+            explanations.append("Suspicious claims detected in content.")
+    
+    # URL-based explanations
+    if features.get("suspicious_urls", False):
+        explanations.append("Article contains links to suspicious or unreliable websites.")
+    
+    # Text style explanations
+    if features.get("excessive_caps", False):
+        explanations.append("Excessive use of capital letters, common in misleading content.")
+    
+    if features.get("excessive_punctuation", False):
+        explanations.append("Excessive use of punctuation, common in misleading content.")
+    
+    # Emotional manipulation
+    if features.get("emotional_manipulation", False):
+        explanations.append("Content appears to use emotional manipulation techniques.")
+    
+    # Add health misinformation explanation if applicable
+    if has_health_keywords and (features.get("has_suspicious_claims_headline", False) or features.get("has_suspicious_claims_content", False)):
+        explanations.append("Health-related misinformation detected. Be especially cautious about unverified health claims.")
     
     # Image-based explanations
-    if image_pred:
-        if image_pred["manipulation_detected"]:
-            explanations.append("The image shows signs of digital manipulation.")
-        
-        if image_pred["metadata_issues"]:
-            explanations.append("The image metadata suggests possible editing.")
+    if features.get("has_metadata_issues", False):
+        explanations.append("Image metadata suggests possible editing.")
     
-    # Combined explanation
+    if features.get("potential_manipulation", False):
+        explanations.append("Image shows signs of digital manipulation.")
+    
+    if features.get("edited_with_software", False):
+        software = features.get("editing_software", "unknown software")
+        explanations.append(f"Image was edited with {software}.")
+    
+    if features.get("is_low_resolution", False):
+        explanations.append("Low resolution image may be used to hide manipulation.")
+        
+    # Image-text consistency explanations
+    if features.get("is_consistent_with_text") is False:
+        explanations.append("The image doesn't appear to match the content of the article, which is a common sign of misinformation.")
+    
+    # If no issues were found
     if not explanations:
-        return "No specific issues were detected with this content."
+        if suspicion_score < 0.2:
+            return "No significant issues detected in the content. The information appears reliable."
+        else:
+            return "Some minor issues detected, but not enough to classify as fake news."
     
     return " ".join(explanations)
 
@@ -291,6 +414,13 @@ def predict_fake_news(headline, content, image_path=None):
     # Image-based features (if image is provided)
     image_features = extract_image_features(image_path) if image_path else {}
     
+    # Image-text consistency features
+    if image_path:
+        consistency_result = check_image_text_consistency(headline, content, image_path)
+        if consistency_result:
+            image_features["consistency_score"] = consistency_result.get("consistency_score", 0.5)
+            image_features["is_consistent_with_text"] = consistency_result.get("is_consistent", True)
+    
     # Combine features for prediction
     features = {**text_features, **image_features}
     
@@ -301,6 +431,17 @@ def predict_fake_news(headline, content, image_path=None):
         if keyword.lower() in headline.lower() or keyword.lower() in content.lower():
             has_health_keywords = True
             break
+    
+    # Analyze sentiment of the content
+    sentiment_analysis = analyze_sentiment(content)
+    features["sentiment"] = sentiment_analysis["sentiment"]
+    features["sentiment_score"] = sentiment_analysis["score"]
+    
+    # Check for emotional manipulation (extreme sentiment in clickbait)
+    if features.get("is_clickbait", False) and abs(sentiment_analysis["score"]) > 0.6:
+        features["emotional_manipulation"] = True
+    else:
+        features["emotional_manipulation"] = False
     
     # Calculate suspicion score based on features
     suspicion_score = calculate_suspicion_score(features)
@@ -313,6 +454,11 @@ def predict_fake_news(headline, content, image_path=None):
             suspicion_score += 0.3
             print(f"DEBUG: Added 0.3 to suspicion score for health misinformation, now {suspicion_score}")
     
+    # Add suspicion for image-text inconsistency
+    if features.get("is_consistent_with_text") is False:
+        suspicion_score += 0.4
+        print(f"DEBUG: Added 0.4 to suspicion score for image-text inconsistency, now {suspicion_score}")
+    
     print(f"DEBUG: Final suspicion score: {suspicion_score}")
     
     # Check for certain combinations that strongly indicate fake news
@@ -322,7 +468,13 @@ def predict_fake_news(headline, content, image_path=None):
         (features.get("has_suspicious_claims_headline", False) and features.get("has_suspicious_claims_content", False)) or
         # Special handling for medical misinformation
         (has_health_keywords and features.get("has_suspicious_claims_headline", False)) or
-        (has_health_keywords and features.get("has_suspicious_claims_content", False))
+        (has_health_keywords and features.get("has_suspicious_claims_content", False)) or
+        # Emotional manipulation
+        (features.get("emotional_manipulation", False) and features.get("has_suspicious_claims_content", False)) or
+        # Image manipulation with suspicious claims
+        (features.get("potential_manipulation", False) and features.get("has_suspicious_claims_content", False)) or
+        # Image doesn't match text
+        (features.get("is_consistent_with_text") is False)
     )
     
     # Determine prediction based on score and feature combinations
@@ -341,11 +493,23 @@ def predict_fake_news(headline, content, image_path=None):
     # Generate explanation
     explanation = generate_explanation(features, suspicion_score, has_health_keywords)
     
+    # Include image-text consistency in the result
+    consistency_info = None
+    if image_path:
+        consistency_info = {
+            "score": features.get("consistency_score", 0.5),
+            "is_consistent": features.get("is_consistent_with_text", True)
+        }
+    
     return {
         "prediction": prediction,
         "confidence": round(float(confidence), 2),
         "explanation": explanation,
-        "features": features
+        "features": features,
+        "image_text_consistency": consistency_info,
+        "image_analysis": image_features if image_path else None,
+        "text_analysis": text_features,
+        "has_health_keywords": has_health_keywords
     }
 
 def extract_text_features(headline, content):
@@ -489,76 +653,6 @@ def calculate_suspicion_score(features):
     
     # Cap the score at 1.0
     return min(score, 1.0)
-
-def generate_explanation(features, suspicion_score, has_health_keywords=False):
-    """
-    Generate an explanation for the prediction based on features.
-    
-    Args:
-        features (dict): Extracted features
-        suspicion_score (float): Calculated suspicion score
-        has_health_keywords (bool): Whether health-related keywords were detected
-        
-    Returns:
-        str: Explanation text
-    """
-    explanations = []
-    
-    # Text-based explanations
-    if features.get("is_clickbait", False):
-        patterns = features.get("clickbait_patterns", [])
-        if patterns:
-            explanations.append(f"Clickbait patterns detected in headline ({', '.join(patterns[:3])}).")
-        else:
-            explanations.append("Clickbait language detected in headline.")
-    
-    if features.get("is_sensationalist_headline", False):
-        patterns = features.get("sensationalist_patterns_headline", [])
-        if patterns:
-            explanations.append(f"Sensationalist language in headline ({', '.join(patterns[:3])}).")
-        else:
-            explanations.append("Sensationalist language detected in headline.")
-    
-    if features.get("is_sensationalist_content", False):
-        patterns = features.get("sensationalist_patterns_content", [])
-        if patterns:
-            explanations.append(f"Sensationalist language in content ({', '.join(patterns[:3])}).")
-        else:
-            explanations.append("Sensationalist language detected in content.")
-    
-    if features.get("has_suspicious_claims_headline", False):
-        patterns = features.get("suspicious_patterns_headline", [])
-        if patterns:
-            explanations.append(f"Suspicious claims in headline ({', '.join(patterns[:3])}).")
-        else:
-            explanations.append("Suspicious claims detected in headline.")
-    
-    if features.get("has_suspicious_claims_content", False):
-        patterns = features.get("suspicious_patterns_content", [])
-        if patterns:
-            explanations.append(f"Suspicious claims detected ({', '.join(patterns[:3])}).")
-        else:
-            explanations.append("Suspicious claims detected in content.")
-    
-    # Add health misinformation explanation if applicable
-    if has_health_keywords and (features.get("has_suspicious_claims_headline", False) or features.get("has_suspicious_claims_content", False)):
-        explanations.append("Health-related misinformation detected. Be especially cautious about unverified health claims.")
-    
-    # Image-based explanations
-    if features.get("has_metadata_issues", False):
-        explanations.append("Image metadata suggests possible editing.")
-    
-    if features.get("potential_manipulation", False):
-        explanations.append("Image shows signs of digital manipulation.")
-    
-    # If no issues were found
-    if not explanations:
-        if suspicion_score < 0.2:
-            return "No significant issues detected in the content."
-        else:
-            return "Some minor issues detected, but not enough to classify as fake news."
-    
-    return " ".join(explanations)
 
 def calculate_avg_word_length(text):
     """

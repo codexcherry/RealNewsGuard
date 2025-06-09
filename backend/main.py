@@ -6,6 +6,7 @@ import os
 import aiofiles
 from typing import Optional
 import uuid
+import shutil
 
 # Import our modules
 from api.news_verification import verify_news
@@ -21,17 +22,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS - update to allow all origins explicitly
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For production, specify exact origins
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
-# Ensure uploads directory exists
+# Ensure directories exist
 os.makedirs("uploads", exist_ok=True)
+os.makedirs("static", exist_ok=True)
+os.makedirs("static/processed_images", exist_ok=True)
 
 # Mount static files directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -49,30 +52,61 @@ async def analyze_news(
     try:
         # Save image if provided
         image_path = None
+        public_image_url = None
         if image:
+            # Generate a unique filename
             file_extension = os.path.splitext(image.filename)[1]
             image_name = f"{uuid.uuid4()}{file_extension}"
             image_path = f"uploads/{image_name}"
+            processed_image_path = f"static/processed_images/{image_name}"
             
+            # Save the uploaded image
             async with aiofiles.open(image_path, "wb") as out_file:
-                content = await image.read()
-                await out_file.write(content)
+                content_bytes = await image.read()
+                await out_file.write(content_bytes)
+            
+            # Create a copy in the static directory for public access
+            shutil.copy(image_path, processed_image_path)
+            
+            # Create a URL for the processed image
+            public_image_url = f"/static/processed_images/{image_name}"
+            
+            print(f"Image saved to {image_path} and {processed_image_path}")
         
         # Process the text
         cleaned_headline = clean_text(headline)
         cleaned_content = clean_text(content) if content else ""
         
-        # Process the image
-        image_path = process_image(image_path)
+        # Process the image if provided
+        if image_path:
+            processed_image_path = process_image(image_path)
+            print(f"Image processed: {processed_image_path}")
         
         # Predict if news is fake
         prediction_result = predict_fake_news(cleaned_headline, cleaned_content, image_path)
         
         # Get related news articles
-        related_news = get_related_news(cleaned_headline)
+        try:
+            related_news = get_related_news(cleaned_headline)
+        except Exception as e:
+            print(f"Error fetching related news: {str(e)}")
+            related_news = {"status": "error", "message": f"Failed to fetch related news: {str(e)}"}
         
         # Verify with fact-checking sites
         verification_results = verify_news(cleaned_headline, cleaned_content)
+        
+        # Check if headline and image match (if image is provided)
+        image_text_match = None
+        if image_path and "image_analysis" in prediction_result:
+            image_analysis = prediction_result.get("image_analysis", {})
+            text_analysis = prediction_result.get("text_analysis", {})
+            
+            # Determine if there's a mismatch between image and text
+            if image_analysis and text_analysis:
+                image_text_match = {
+                    "match_score": 0.8,  # Placeholder - in a real implementation, this would be calculated
+                    "match_status": "Consistent",  # Placeholder
+                }
         
         # Combine results
         result = {
@@ -80,12 +114,15 @@ async def analyze_news(
             "confidence": prediction_result["confidence"],
             "explanation": prediction_result["explanation"],
             "related_news": related_news,
-            "fact_checks": verification_results
+            "fact_checks": verification_results,
+            "image_url": public_image_url,
+            "image_text_match": image_text_match
         }
         
         return result
     
     except Exception as e:
+        print(f"Error in analyze_news: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
