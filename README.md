@@ -1,100 +1,122 @@
 # RealNewsGuard
 
-RealNewsGuard is an AI-powered fake news detection system that combines text analysis, image verification, and fact-checking to help users identify potentially misleading or false information.
+RealNewsGuard is an **AI-powered fake news detection system** that combines advanced text analysis, image verification, and automated fact-checking to help users identify potentially misleading or false information in news articles.
 
-## Features
+---
 
-- **Text Analysis**: Detects clickbait headlines, sensationalist language, and suspicious claims
-- **Image Verification**: Checks for image manipulation using Error Level Analysis (ELA)
-- **External API Integration**: Fetches related news articles from NewsAPI
-- **Fact-Checking**: Searches fact-checking websites (Snopes, PolitiFact, FactCheck.org) for related claims
-- **Comprehensive Results**: Provides prediction (REAL/FAKE/SUSPICIOUS), confidence score, and explanation
+## 🚀 Features
 
-## Project Structure
+- **Text Analysis:** Detects clickbait headlines, sensationalist language, and suspicious claims using NLP and ML models.
+- **Image Verification:** Checks for image manipulation using Error Level Analysis (ELA) and metadata inspection.
+- **External API Integration:** Fetches related news articles from NewsAPI to provide context.
+- **Automated Fact-Checking:** Searches leading fact-checking websites (Snopes, PolitiFact, FactCheck.org) for related claims.
+- **Comprehensive Output:** Returns prediction (REAL/FAKE/SUSPICIOUS), confidence score, explanations, and reference links.
+- **User-Friendly Interface:** Clean front-end for easy interaction.
+- **Easy to Extend:** Modular backend for adding new sources, models, or verification methods.
+
+---
+
+## 🗂️ Project Structure
 
 ```
 RealNewsGuard/
 ├── backend/
 │   ├── api/
-│   │   ├── __init__.py
-│   │   ├── news_api.py
-│   │   └── news_verification.py
 │   ├── models/
-│   │   ├── __init__.py
-│   │   └── prediction.py
 │   ├── static/
 │   ├── uploads/
-│   │   └── .gitkeep
 │   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── image_utils.py
-│   │   └── text_utils.py
 │   ├── main.py
 │   └── requirements.txt
 ├── data/
-│   └── .gitkeep
 ├── frontend/
 │   ├── public/
-│   │   └── index.html
 │   └── src/
-│       ├── app.js
-│       └── styles.css
 ├── models/
-│   └── .gitkeep
 └── README.md
 ```
-#Run the application
 
-1.backend
+---
+
+## ⚙️ Getting Started
+
+### 1. Clone this repository
+
+```bash
+git clone https://github.com/codexcherry/RealNewsGuard.git
+cd RealNewsGuard
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+pip install -r requirements.txt
 uvicorn main:app --reload
+```
 
-2.frontend
-python -m http.server
+### 3. Frontend Setup
 
-## How It Works
+```bash
+cd ../frontend
+python -m http.server  # Or use any preferred static server
+```
 
-1. **Input**: Users provide a news headline, content, and optionally an image
-2. **Analysis**:
-   - Text is analyzed for clickbait patterns, sensationalist language, and suspicious claims
-   - Images are checked for manipulation using Error Level Analysis and metadata examination
-   - Related news articles are fetched from NewsAPI
-   - Fact-checking sites are queried for relevant fact-checks
-3. **Output**: The system provides a prediction (REAL/FAKE/SUSPICIOUS) with confidence score, explanation, related news articles, and fact-check results
+---
 
-## Technologies Used
+## 🧠 How It Works
 
-- **Backend**: FastAPI, Python
-- **Frontend**: HTML, CSS, JavaScript
-- **Text Analysis**: scikit-learn, LIME, SHAP
-- **Image Analysis**: Pillow
-- **External APIs**: NewsAPI
+1. **Input:** User submits a news headline, content, and an optional image.
+2. **Analysis:**  
+   - Text is checked for clickbait, sensationalist language, and suspicious claims.
+   - Images are analyzed for manipulation (ELA and metadata).
+   - Related news is fetched from NewsAPI.
+   - Fact-checking platforms are queried for relevant articles.
+3. **Output:**  
+   - Prediction: REAL, FAKE, or SUSPICIOUS.
+   - Confidence score and explainable AI output (LIME/SHAP).
+   - Related news links and fact-check summaries.
 
-## License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 🛠️ Technologies Used
 
-## Acknowledgments
+- **Backend:** FastAPI, Python
+- **Frontend:** HTML, CSS, JavaScript
+- **ML/NLP:** scikit-learn, LIME, SHAP
+- **Image Analysis:** Pillow
+- **External APIs:** NewsAPI
+- **Testing:** Pytest
 
-- NewsAPI for providing access to news articles
-- Fact-checking organizations (Snopes, PolitiFact, FactCheck.org) for their valuable work
+---
 
-## Recent Updates
+## 📝 Example Use Cases
 
-### Improved Fake News Detection
-- Enhanced the detection algorithm to better identify fake news content
-- Added heuristic analysis of combined patterns (clickbait + suspicious claims, etc.)
-- Refined confidence scoring to provide more accurate results
-- Improved explanations to provide more detailed information about detected issues
+- **Journalists:** Rapidly verify the authenticity of viral stories.
+- **Educators:** Teach students about misinformation and critical reading.
+- **Fact-Checkers:** Automate initial screening of news submissions.
 
-### Testing
-- Added test scripts to verify system functionality
-  - `test_prediction.py` - Tests the core prediction model directly
-  - `test_api.py` - Tests the API endpoints with various examples
-  
-### Detection Features
-The system now looks for multiple indicators of fake news, including:
-- Clickbait language in headlines
-- Sensationalist language in headlines and content
-- Suspicious claims in both headlines and content
-- Combinations of these features that strongly indicate fake news
-- Image manipulation (when images are provided) 
+---
+
+## 📈 Recent Updates
+
+- Enhanced detection algorithms and added heuristic analysis.
+- Refined confidence scoring and explanations.
+- Added comprehensive test scripts (`test_prediction.py`, `test_api.py`).
+- Broadened detection for clickbait, sensationalism, and suspicious claims.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- NewsAPI for providing access to reliable news.
+- Fact-checking organizations (Snopes, PolitiFact, FactCheck.org).
+- Open source contributors and reviewers.
+
+---
